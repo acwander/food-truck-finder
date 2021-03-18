@@ -37,41 +37,35 @@ getFoodTrucks = (offset) => {
   var page = `&$limit=${limit}&$offset=${offset}`; // set the max # of trucks to return and offset for pages
 
 	// Get food trucks request
-	request
-		.get(
-			`${baseURL}${dayOrder}${openTime}${dataSelect}${sort}${page}`,
-			function (error, response, body) {
-        // Print the error if one occurred
-        if (error != null) {
-          console.error('error:', error);
-        }
-        // Print the response status code if 200 not received
-        if (response.statusCode != 200) {
-          console.log('statusCode:', response && response.statusCode);
-        }
-        // Print the data if no error and status code success
-        if (!error && response.statusCode == 200) {
-        // Parse data from a string to a JS object
-				var openFoodTrucks = JSON.parse(body);
-				var numTrucks = openFoodTrucks.length;
+	request.get(`${baseURL}${dayOrder}${openTime}${dataSelect}${sort}${page}`,
+    function (error, response, body) {
+      // Print the error if one occurred
+      if (error != null) {
+        console.error('error:', error);
+      }
 
-				console.log(`Your local time is ${currentTime}.`);
+      // Print the response status code if 200 not received
+      if (response.statusCode != 200) {
+        console.log('statusCode:', response && response.statusCode);
+      }
 
-        // Loop to display trucks on page
-				for (var i = 0; i < numTrucks; i++) {
-					var truck = openFoodTrucks[i];
-					console.log(
-						`${i + 1}. ${
-							truck.applicant
-						} is currently open. They are located at ${
-							truck.location
-						}. Their hours are ${truck.start24} to ${truck.end24}.\n`
-					);
-				}
-				printMoreTrucks(numTrucks, offset);
-        }
-			}
-		)
+      // Print the data if no error and status code success
+      if (!error && response.statusCode == 200) {
+      // Parse data from a string to a JS object
+      var openFoodTrucks = JSON.parse(body);
+      var numTrucks = openFoodTrucks.length;
+
+      console.log(`Your local time is ${currentTime}.`);
+
+      // Display trucks on page
+      for (var i = 0; i < numTrucks; i++) {
+        var truck = openFoodTrucks[i];
+        console.log(`${i + 1}. ${truck.applicant} is currently open. They are located at ${truck.location}. Their hours are ${truck.start24} to ${truck.end24}.\n`);
+      }
+      printMoreTrucks(numTrucks, offset);
+      }
+    }
+  )
 };
 
 printMoreTrucks = (numTrucks, offset) => {
