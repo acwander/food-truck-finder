@@ -2,49 +2,62 @@ var request = require('request');
 var stdin = process.stdin;
 const limit = 10;
 
-// gets current system date/time
-getDateTime = () => {
-	var today = new Date();
-	systemDate = {
-		hour: today.getHours(),
-		minutes: today.getMinutes(),
-		// seconds: today.getSeconds(),
-		// year: today.getFullYear(),
-		// month: today.getMonth() + 1,
-		// date: today.getDate(),
-		day: today.getDay(),
+// Get current system time
+getTime = () => {
+	var currentTime = new Date();
+	sysTime = {
+		hour: currentTime.getHours(),
+		minutes: currentTime.getMinutes(),
+		day: currentTime.getDay(),
 	};
 };
 
-// The $offset parameter is most often used in conjunction with $limit to page through a dataset - https://dev.socrata.com/docs/queries/offset.html
-
 getFoodTrucks = (offset) => {
-	// refresh time for each request
-	getDateTime();
+	// Refresh time for each request
+	getTime();
 
 	// fix hour and minutes
 	// if value is less than or equal to 9 it comes back without the 0
-	if (systemDate.hour < 9) {
-		systemDate.hour = '0' + systemDate.hour;
+	if (sysTime.hour < 9) {
+		sysTime.hour = '0' + sysTime.hour;
 	}
 
-	if (systemDate.minutes < 9) {
-		systemDate.minutes = '0' + systemDate.minutes;
+	if (sysTime.minutes < 9) {
+		sysTime.minutes = '0' + sysTime.minutes;
 	}
 
-	var currentTime = systemDate.hour + `:` + systemDate.minutes;
+	var currentTime = sysTime.hour + `:` + sysTime.minutes;
 
-	// get food trucks api request and handlers
+  // API options
+  var baseURL = `http://data.sfgov.org/resource/bbb8-hzi6.json?`;
+  var dayOrder = `&dayorder=${sysTime.day}`; // set the current day
+  var openTime = `&$where=start24<='${currentTime}'%20and%20end24>'${currentTime}'`; // set the time range
+  var dataSelect = `&$select=applicant,location,start24,end24`; // set what data to return for each truck
+  var sort = `&$order=applicant`; // sort in ascending order by name
+  var page = `&$limit=${limit}&$offset=${offset}`; // set the max # of trucks to return and offset for pages
+
+	// Get food trucks request
 	request
 		.get(
-			`http://data.sfgov.org/resource/bbb8-hzi6.json?&dayorder=${systemDate.day}&$where=start24<='${currentTime}'%20and%20end24>'${currentTime}'&$select=applicant,location,start24,end24&$order=applicant&$limit=${limit}&$offset=${offset}`,
+			`${baseURL}${dayOrder}${openTime}${dataSelect}${sort}${page}`,
 			function (error, response, body) {
-				// convert the data from a string to a js object
+        // Print the error if one occurred
+        if (error != null) {
+          console.error('error:', error);
+        }
+        // Print the response status code if 200 not received
+        if (response.statusCode != 200) {
+          console.log('statusCode:', response && response.statusCode);
+        }
+        // Print the data if no error and status code success
+        if (!error && response.statusCode == 200) {
+        // Parse data from a string to a JS object
 				var openFoodTrucks = JSON.parse(body);
 				var numTrucks = openFoodTrucks.length;
 
-				console.log(`Your request was made at ${currentTime}.`);
+				console.log(`Your local time is ${currentTime}.`);
 
+        // Loop to display trucks on page
 				for (var i = 0; i < numTrucks; i++) {
 					var truck = openFoodTrucks[i];
 					console.log(
@@ -56,22 +69,24 @@ getFoodTrucks = (offset) => {
 					);
 				}
 				printMoreTrucks(numTrucks, offset);
+        }
 			}
 		)
-		// log the error if necessary
-		.on('error', function (e) {
-			console.error(e);
-		});
 };
 
 printMoreTrucks = (numTrucks, offset) => {
-	// if previous return had max trucks, display more
+	// If the previous return had max trucks per page, display more
 	if (numTrucks == limit) {
+    // Increment the offset by the page limit
+    offset += limit;
+
+    // Prompt the user to proceed
 		console.log('Press enter to see more open food trucks...');
 
+    // Wait for user to press key
 		stdin.addListener('data', function (data) {
 			stdin.removeAllListeners('data');
-			getFoodTrucks(limit + offset);
+			getFoodTrucks(offset);
 		});
 	} else {
 		console.log('No more open food trucks.');
@@ -79,7 +94,9 @@ printMoreTrucks = (numTrucks, offset) => {
 	}
 };
 
+// On load
 getFoodTrucks(0);
 
 // to run locally, first install node and npm. then:
 // $ npm install request && node FoodTruckFinder.js
+// CTRL + C in command line to exit program early
