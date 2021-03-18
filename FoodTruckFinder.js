@@ -2,9 +2,6 @@ var request = require('request');
 var stdin = process.stdin;
 const limit = 10;
 
-// set input character encoding
-stdin.setEncoding('utf-8');
-
 // gets current system date/time
 getDateTime = () => {
 	var today = new Date();
