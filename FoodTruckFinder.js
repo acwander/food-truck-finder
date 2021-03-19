@@ -3,13 +3,11 @@ var stdin = process.stdin;
 const limit = 10;
 
 // Get current system time
-getTime = () => {
-	var currentTime = new Date();
-	sysTime = {
-		hour: currentTime.getHours(),
-		minutes: currentTime.getMinutes(),
-		day: currentTime.getDay(),
-	};
+var currentTime = new Date();
+sysTime = {
+	hour: currentTime.getHours(),
+	minutes: currentTime.getMinutes(),
+	day: currentTime.getDay(),
 };
 
 // if value is less than or equal to 9 it comes back without the 0
@@ -18,9 +16,6 @@ fixTime = (n) => {
 };
 
 getFoodTrucks = (offset) => {
-	// Refresh time for each request
-	getTime();
-
 	// fix hour and minutes
 	if (sysTime.hour <= 9) {
 		sysTime.hour = fixTime(sysTime.hour);
@@ -59,8 +54,6 @@ getFoodTrucks = (offset) => {
 				// Parse data from a string to a JS object
 				var openFoodTrucks = JSON.parse(body);
 				var numTrucks = openFoodTrucks.length;
-
-				console.log(`Your local time is ${currentTime}.`);
 
 				// Display trucks on page
 				for (var i = 0; i < numTrucks; i++) {
@@ -101,7 +94,3 @@ printMoreTrucks = (numTrucks, offset) => {
 
 // On load
 getFoodTrucks(0);
-
-// to run locally, first install node and npm. then:
-// $ npm install request && node FoodTruckFinder.js
-// CTRL + C in command line to exit program early
